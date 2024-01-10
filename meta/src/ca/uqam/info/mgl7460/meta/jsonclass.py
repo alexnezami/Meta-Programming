@@ -29,8 +29,16 @@ class JSONClass:
 
 
     # this method 
-    def set_attribute_value(self, receiver: object, attribute_name: str, attribute_value: object):
-        pass
+    def set_attribute_value(self, receiver: object, attribute_name: str, attribute_value: object):        
+        if attribute_name in self.attributes:
+            #J'ai utilisé la fonction setattr par défaut de python pour modifier les valeurs des propriétés d'un objet au moment de l'exécution.
+            #Ceci est très utile dans les cas où le nom de la propriété n'est pas connu au moment de l'écriture du code
+            #et doit être spécifié au moment de l'exécution.
+            setattr(receiver, attribute_name, attribute_value)
+        else:
+            # Si on n'a pas trouvé attribute_name dans    attributes , on diffuse un message erreur
+            raise AttributeError(f"{attribute_name} n'a pas trouvé en classe {self.name}")
+
 
 
     # Adds a relationship from the current class to an entity named target_type_name
@@ -108,16 +116,24 @@ class JSONClass:
     # of whichever structure is appropriate: a) a list, or b) a map (if the relationship
     # is indexed)
     def generate_constructor(self, python_file: TextIOWrapper):
-        # 1. Generate header
-
-        # 2. Generate code to initialize attributes
+        # Démarrer la définition du constructeur
+        python_file.write("    def __init__(self")
+    
+        # Ajouter des paramètres pour chaque attribut
+        for attr_name, attr_type in self.attributes.items():
+            python_file.write(f", {attr_name}: {attr_type.__name__} = None")
+    
+            python_file.write("):\n")
         
-        # 3. Generate code to initialize relationships
-            # 3.1 if ONE_TO_ONE, initialize to None
+        # Initialiser chaque attribut
+        for attr_name in self.attributes:
+            python_file.write(f"        self.{attr_name} = {attr_name}\n")
 
-            # 3.2 if ONE_TO_MANY, check if the relation is indexed or not
-                # 3.2.1 It is indexed
-
+        # Initialiser les relations
+        for rel_name, relation in self.relationships.items():
+            init_value = "None" if relation.multiplicity == Relationship.ONE_TO_ONE else "[]"
+            python_file.write(f"        self.{rel_name} = {init_value}\n")
+    
         python_file.write("\n\n")    
 
     #

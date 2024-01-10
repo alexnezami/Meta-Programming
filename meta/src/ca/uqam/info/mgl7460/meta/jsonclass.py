@@ -144,20 +144,17 @@ class JSONClass:
     # fields
     #         
     def generate__str__method(self, python_file: TextIOWrapper):
-        # 1. generate the function header
+        python_file.write("    def __str__(self):\n")
+        python_file.write("        return f'{self.__class__.__name__}:' + '\\n' + \\\n")
 
-        # 2. second, generate the statements that will print the attributes
+        # Les attributs
+        for attr_name in self.attributes:
+            python_file.write(f"            f'{attr_name}: {getattr(self, attr_name)}' + '\\n' + \\\n")
         
-        # 3. third, generate the statements that will print 
-        # the relations.
+        # Des relations
         for relation in iter(self.relationships.values()):
-            # depending on whether the relation is indexed or not, different code
-            # should be generated
-            pass
-        
+            python_file.write(f"            f'{relation}: {getattr(self, relation)}' + '\\n' + \\\n")
 
-        # 4. add __str__ code to the file
-        # python_file.write(__str__code)
         python_file.write("\n") 
 
 

@@ -14,11 +14,11 @@ class Relationship:
 
 
         def is_indexed(self) -> bool:
-                return not (self.index_field == None)
+                return self.index_field != None
 
 
         def __str__(self):
                 structure = "List<"
-                if (not self.index_field == None):
+                if (self.index_field != None):
                         structure = "Map<" + self.index_field+","
                 return self.name + " [" + self.source_entity + " -> " + structure + self.destination_entity+ ">]"

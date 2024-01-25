@@ -29,8 +29,16 @@ class JSONClass:
 
 
     # this method 
-    def set_attribute_value(self, receiver: object, attribute_name: str, attribute_value: object):
-        pass
+    def set_attribute_value(self, receiver: object, attribute_name: str, attribute_value: object):        
+        if attribute_name in self.attributes:
+            #J'ai utilisé la fonction setattr par défaut de python pour modifier les valeurs des propriétés d'un objet au moment de l'exécution.
+            #Ceci est très utile dans les cas où le nom de la propriété n'est pas connu au moment de l'écriture du code
+            #et doit être spécifié au moment de l'exécution.
+            setattr(receiver, attribute_name, attribute_value)
+        else:
+            # Si on n'a pas trouvé attribute_name dans    attributes , on diffuse un message erreur
+            raise AttributeError(f"{attribute_name} n'a pas trouvé en classe {self.name}")
+
 
 
     # Adds a relationship from the current class to an entity named target_type_name
@@ -108,16 +116,24 @@ class JSONClass:
     # of whichever structure is appropriate: a) a list, or b) a map (if the relationship
     # is indexed)
     def generate_constructor(self, python_file: TextIOWrapper):
-        # 1. Generate header
-
-        # 2. Generate code to initialize attributes
+        # Démarrer la définition du constructeur
+        python_file.write("    def __init__(self")
+    
+        # Ajouter des paramètres pour chaque attribut
+        for attr_name, attr_type in self.attributes.items():
+            python_file.write(f", {attr_name}: {attr_type.__name__} = None")
+    
+            python_file.write("):\n")
         
-        # 3. Generate code to initialize relationships
-            # 3.1 if ONE_TO_ONE, initialize to None
+        # Initialiser chaque attribut
+        for attr_name in self.attributes:
+            python_file.write(f"        self.{attr_name} = {attr_name}\n")
 
-            # 3.2 if ONE_TO_MANY, check if the relation is indexed or not
-                # 3.2.1 It is indexed
-
+        # Initialiser les relations
+        for rel_name, relation in self.relationships.items():
+            init_value = "None" if relation.multiplicity == Relationship.ONE_TO_ONE else "[]"
+            python_file.write(f"        self.{rel_name} = {init_value}\n")
+    
         python_file.write("\n\n")    
 
     #
@@ -128,20 +144,17 @@ class JSONClass:
     # fields
     #         
     def generate__str__method(self, python_file: TextIOWrapper):
-        # 1. generate the function header
+        python_file.write("    def __str__(self):\n")
+        python_file.write("        return f'{self.__class__.__name__}:' + '\\n' + \\\n")
 
-        # 2. second, generate the statements that will print the attributes
+        # Les attributs
+        for attr_name in self.attributes:
+            python_file.write(f"            f'{attr_name}: {getattr(self, attr_name)}' + '\\n' + \\\n")
         
-        # 3. third, generate the statements that will print 
-        # the relations.
+        # Des relations
         for relation in iter(self.relationships.values()):
-            # depending on whether the relation is indexed or not, different code
-            # should be generated
-            pass
-        
+            python_file.write(f"            f'{relation}: {getattr(self, relation)}' + '\\n' + \\\n")
 
-        # 4. add __str__ code to the file
-        # python_file.write(__str__code)
         python_file.write("\n") 
 
 
@@ -174,94 +187,64 @@ class JSONClass:
                 python_file.write(indexed_accessor_string)
             
 
-    # depending on whether we have a list or table, we will either 
-    # use "self.<relation name>.append(parameter_name)" 
-    # or "self.<relation name>[parameter.<index field>] = parameter "
-    # where <index field> is relation.index_field. Thus, the expression
-    # is "self.<relation name>[parameter_name.<relation.index_field>] = parameter_name "
+    # on crée une chaîne de code pour ajouter des éléments à une relation
     def get_adder_string(self, relation_name: str, relation: Relationship)-> str:
-        adder_code = ""
-        return adder_code
+        if relation.index_field:
+            return f"""    def add_{relation_name}(self, item):
+        self.{relation_name}[item.{relation.index_field}] = item\n\n"""
+        else:
+            return f"""    def add_{relation_name}(self, item):
+        self.{relation_name}.append(item)\n\n"""
 
-    # depending on whether we have a list or table, we will either 
-    # use "self.<relation name>.remove(parameter_name)" 
-    # or "self.<relation name>.pop(parameter_name.<index field>)"
-    # where <index field> is relation.index_field. Thus, the expression
-    # is "self.<relation name>.pop(parameter_name.<relation.index_field>)"
+    # on crée une chaîne de code pour supprimer des éléments d'une relation
     def get_remover_string(self, relation_name: str, relation: Relationship)-> str:
-        remover_code = ""
-        return remover_code
+        if relation.index_field:
+            return f"""    def remove_{relation_name}(self, item):
+        self.{relation_name}.pop(item.{relation.index_field})\n\n"""
+        else:
+            return f"""    def remove_{relation_name}(self, item):
+        self.{relation_name}.remove(item)\n\n"""
 
-    # depending on whether we have a list or table, we will either 
-    # use "iter(self.<relation name>)" or 
-    # or "iter(self.<relation name>.values())"
+    # on renvoie une chaîne de code pour créer un itérateur pour la relation
     def get_iterator_string(self, relation_name: str, relation: Relationship)-> str:
-        iterator_code = ""
-        return iterator_code
+        if relation.index_field:
+            return f"""    def iter_{relation_name}(self):
+        return iter(self.{relation_name}.values())\n\n"""
+        else:
+            return f"""    def iter_{relation_name}(self):
+        return iter(self.{relation_name})\n\n"""
 
-    # an indexed accessor function, which takes a key as a parameter
+    # on crée une chaîne de code pour accéder aux éléments d'une relation indexée
     def get_indexed_accessor_string(self, relation_name: str, relation: Relationship)-> str:
-        indexed_accessor_code = ""
+        if relation.index_field:
+            return f"""    def get_{relation_name}(self, key):
+        return self.{relation_name}.get(key)\n\n"""
+        else:
+            return ""
 
-        return indexed_accessor_code
+    # on cree objet avec les donnees qu'on a deja trouve
+    def create_object(self, json_fragment: dict):
+
+        # on a cree un instance 
+        new_obj = self.type({attr:json_fragment.get(attr) for attr in self.attributes})
 
 
-    # 
-    # This function takes as an argument a class name and a json
-    # object/fragment, and creates an object of the corresponding 
-    # class and populates its fields with the contents of json_fragment
-    # 
-    # Depending on the structure of the class, if the class has relationships
-    # to other classes, then objects of the other classes are created, 
-    # recursively.
-    # 
-    def create_object(self, json_fragment: str):
-        # 1. construct object
-        # 1.1. get list of constructor parameters
-        
-        # 1.2. create a string that represents the invocation of the constructor
-
-        # 1.3. evaluate the expression to create the object
-
-        # 2. Now, add the relationships. Utiliser l'information
-        #    contenue dans self.relationships pour savoir
-        #    comment 'interpreter' le fragment json, et quelle
-        #    méthode invoquer pour lier les objets créés
-        for relation in iter(self.relationships.values()):
-            # 2.1 check if it is a list or table to determine 
-            # how to handle relation_value
+        # traiter sur relation
+        for name, relation in self.relationships.items():
+            value = json_fragment.get(name)
+            # si relation est indexe on cree une dictionaire
             if (relation.is_indexed()):
-                # 2.1.a it is table, and thus, a list of 
-                # key value pairs. In this case, iterate 
-                # over the keys of relation_value, and: i) create an
-                # an object with the value part, and ii) insert it in the
-                # new_objet with the appropriate insert method that uses
-                # the key part as an index
 
-                    # 2.1.a.1 get the JSONClass representing the destination entity
-
-                    # 2.1.a.2 get the json fragment corresponding to the destination entity
-
-                    # 2.1.a.3 recursively, create the destination entity using the corresponding
-                    # json class objet
-
-                    # 2.1.a.4 now, add the component object to the current object using its corresponding
-                    # indexed accessor
-                pass
-
+                relation_objects = {
+                    key: JSONClass.JSON_CLASSES[relation.destination_entity].create_object(item)
+                    for key, item in value.item()
+                }
             else:
-                # 2.1.b It is a simple list. Thus relation_value is a list of
-                # json fragments representing individual objects
-                
-                    # 2.1.b.1 get the JSONClass representing the destination entity
-                
-                    # 2.1.b.2 recursively, create the destination entity using the corresponding
-                    # json class objet
-                
-                    # 2.1.a.4 now, add the component object to the current object using its corresponding
-                    # indexed accessor
-                pass
-                    
+            # sinon on cree une list
+                relation_objects = [
+                    JSONClass.JSON_CLASSES[relation.destination_entity].create_object(item)
+                    for item in value
+                ]
+            setattr(new_obj, name, relation_objects)
 
-
-        # return new_object
+            return new_obj

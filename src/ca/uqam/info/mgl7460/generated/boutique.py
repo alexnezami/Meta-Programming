@@ -1,7 +1,7 @@
 class boutique:
-    def __init__(self):
-        pass
+	def __init__(self):
 
-    def __str__(self):
+
+    def __str__(self) -> str:
         return f'{self.__class__.__name__}:' + '\n' + \
-
+"

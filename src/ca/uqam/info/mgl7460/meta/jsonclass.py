@@ -106,9 +106,9 @@ class JSONClass:
         # 3. get the 'type' object that represents the 'compiled version'
         #    of this JSONClass. I called it class_class_object in my code
         #    
-        #    Quand vous aurez fait cela, enlevez le commentaire
-        # 
-        # self.type = class_class_object
+        class_class_object = module.__dict__[self.name]
+        self.type = class_class_object    
+     
         return self.type
 
     # By default, the constructor will take a value for each attribute, and initialize it.
@@ -117,22 +117,21 @@ class JSONClass:
     # is indexed)
     def generate_constructor(self, python_file: TextIOWrapper):
         # Démarrer la définition du constructeur
-        python_file.write("    def __init__(self")
+        parameter_list = ", ".join(["self"] + list(self.attributes.keys()))
+        constructor_signature = f"\tdef __init__({parameter_list}):\n"
+        python_file.write(constructor_signature)
     
-        # Ajouter des paramètres pour chaque attribut
-        for attr_name, attr_type in self.attributes.items():
-            python_file.write(f", {attr_name}: {attr_type.__name__} = None")
-    
-            python_file.write("):\n")
-        
         # Initialiser chaque attribut
-        for attr_name in self.attributes:
-            python_file.write(f"        self.{attr_name} = {attr_name}\n")
+        for attributename in iter(self.attributes.keys()):
+            python_file.write(f"\t\tself.{attributename} = {attributename}\n")
 
         # Initialiser les relations
-        for rel_name, relation in self.relationships.items():
-            init_value = "None" if relation.multiplicity == Relationship.ONE_TO_ONE else "[]"
-            python_file.write(f"        self.{rel_name} = {init_value}\n")
+        for relation in self.relationships.values():
+            if relation.multiplicity == Relationship.ONE_TO_ONE:
+                python_file.write(f"\t\tself.{relation.name} = None\n")
+            else:
+                container_type = "dict" if relation.is_indexed() else "list"
+                python_file.write(f"\t\tself.{relation.name} = {container_type}()\n")
     
         python_file.write("\n\n")    
 
@@ -144,7 +143,7 @@ class JSONClass:
     # fields
     #         
     def generate__str__method(self, python_file: TextIOWrapper):
-        python_file.write("    def __str__(self):\n")
+        python_file.write("    def __str__(self) -> str:\n")
         python_file.write("        return f'{self.__class__.__name__}:' + '\\n' + \\\n")
 
         # Les attributs
@@ -153,9 +152,10 @@ class JSONClass:
         
         # Des relations
         for relation in iter(self.relationships.values()):
-            python_file.write(f"            f'{relation}: {getattr(self, relation)}' + '\\n' + \\\n")
 
-        python_file.write("\n") 
+            python_file.write(f"            f'{relation}: {getattr(self, relation)}' + '\\n' )")
+
+        python_file.write("\"\n") 
 
 
 

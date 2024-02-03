@@ -143,24 +143,31 @@ class JSONClass:
     # fields
     #         
     def generate__str__method(self, python_file: TextIOWrapper):
-        # python_file.write("\n\n\tdef __str__(self) -> str:\n")
-        
-        # attr_lines = [f"\t\t{key} => {{self.{key}.__str__()}} ;" for key in self.attributes]
-        # attribute_string = "\\n".join(attr_lines)
+        # 1. generate the function header
+        python_file.write("\tdef __str__(self) -> str:\n")
 
-       
-        # relation_lines = []
-        # for relation in self.relationships.values():
-        #   if not relation.is_indexed():
-        #     relation_lines.append(f"\\n{relation.name}[{{' + '\\n'.join([f'{{item.__str__()}}' for item in iter(self.{relation.name})]) + '}}] ;")
-        # else:
-        #     indexed_relation_lines = [f"{{key}}: {{self.{relation.name}[key].__str__()}}" for key in f"self.{relation.name}"]
-        #     relation_lines.append(f"\\n{relation.name}[{{' + '\\n'.join(indexed_relation_lines) + '}}] ;")  
-        
-        # final_string = f"\\n\t\treturn '{self.name}[ ' + '\\n{attribute_string}' + '\\n' + '\\n'.join(relation_lines) + '\\n"
-        # python_file.write(final_string)
-        pass
+        # 2. second, generate the statements that will print the attributes
+        python_file.write("\t\treturn_string = "+ '"'+self.name+'["'+ "\n")
+        for key in self.attributes:
+            python_file.write("\t\treturn_string = return_string + "+ f'"{key} = "'+   "+ self."+key+".__str__()"  + '+ ", "\n')
 
+        python_file.write("\t\treturn_string = return_string[:-2] + " + '"]"\n')  
+        python_file.write("\t\treturn return_string") 
+        #return_string = return_string[:-2] + "]"
+        # 3. third, generate the statements that will print 
+
+
+        # the relations.
+        for relation in iter(self.relationships.values()):
+            # depending on whether the relation is indexed or not, different code
+            # should be generated
+            pass
+        
+
+        # 4. add __str__ code to the file
+        # python_file.write(__str__code)
+        python_file.write("\n") 
+        
     #
     # This method generates accessors for collection-like attributes, i.e. ONE_TO_MANY
     # (indexed or not) relationships. For those, we need to provide methods to add,

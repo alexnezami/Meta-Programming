@@ -16,3 +16,8 @@ class commande:
     def get_table_ligne_commandes(self, key):
         return self.table_ligne_commandes.get(key)
 
+	def __str__(self) -> str:
+		return_string = "commande["
+		return_string = return_string + "id = "+ self.id.__str__()+ ", "
+		return_string = return_string[:-2] + "]"
+		return return_string

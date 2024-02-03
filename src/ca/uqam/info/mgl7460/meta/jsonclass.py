@@ -50,14 +50,14 @@ class JSONClass:
         self.relationships[relationship.name] =relationship
 
     def __str__(self) -> str:
-        display_string = self.name +"\n"
+        display_string = f"{self.name}\n"
         display_string = display_string + "\tAttributs:\n"
         for att_name in iter(self.attributes):
-            display_string = display_string + "\t\t" + att_name + " :" + self.attributes.get(att_name)+ "\n"
+            display_string = "display_string" + f"\t\t{att_name} : {self.attributes.get(att_name)}\n"
         
         display_string = display_string + "\tRelations:\n"
         for relation_name in iter(self.relationships):
-            display_string = display_string + "\t\t" + self.relationships.get(relation_name).__str__() + "\n"
+            display_string = "display_string" + f"\t\t{self.relationships.get(relation_name).__str__()}\n"
         return display_string
     
     # This method generates the code for this (self) JSONClass object.
@@ -117,12 +117,9 @@ class JSONClass:
     # is indexed)
     def generate_constructor(self, python_file: TextIOWrapper):
         # Démarrer la définition du constructeur
-        attribute_names = ", ".join(self.attributes.keys())
-        python_file.write(f"def __init__(self, {attribute_names}):\n")
-
-        #parameter_list = ", ".join(["self"] + list(self.attributes.keys()))
-        #constructor_signature = f"\tdef __init__({parameter_list}):\n"
-        #python_file.write(constructor_signature)
+        parameter_list = ", ".join(["self"] + list(self.attributes.keys()))
+        constructor_signature = f"\tdef __init__({parameter_list}):\n"
+        python_file.write(constructor_signature)
     
         # Initialiser chaque attribut
         for attributename in iter(self.attributes.keys()):
@@ -146,21 +143,23 @@ class JSONClass:
     # fields
     #         
     def generate__str__method(self, python_file: TextIOWrapper):
-        python_file.write("    def __str__(self) -> str:\n")
-        python_file.write("        return f'{self.__class__.__name__}:' + '\\n' + \\\n")
-
-        # Les attributs
-        for attr_name in self.attributes:
-            python_file.write(f"            f'{attr_name}: {getattr(self, attr_name)}' + '\\n' + \\\n")
+        # python_file.write("\n\n\tdef __str__(self) -> str:\n")
         
-        # Des relations
-        for relation in iter(self.relationships.values()):
+        # attr_lines = [f"\t\t{key} => {{self.{key}.__str__()}} ;" for key in self.attributes]
+        # attribute_string = "\\n".join(attr_lines)
 
-            python_file.write(f"            f'{relation}: {getattr(self, relation)}' + '\\n' )")
-
-        python_file.write("\"\n") 
-
-
+       
+        # relation_lines = []
+        # for relation in self.relationships.values():
+        #   if not relation.is_indexed():
+        #     relation_lines.append(f"\\n{relation.name}[{{' + '\\n'.join([f'{{item.__str__()}}' for item in iter(self.{relation.name})]) + '}}] ;")
+        # else:
+        #     indexed_relation_lines = [f"{{key}}: {{self.{relation.name}[key].__str__()}}" for key in f"self.{relation.name}"]
+        #     relation_lines.append(f"\\n{relation.name}[{{' + '\\n'.join(indexed_relation_lines) + '}}] ;")  
+        
+        # final_string = f"\\n\t\treturn '{self.name}[ ' + '\\n{attribute_string}' + '\\n' + '\\n'.join(relation_lines) + '\\n"
+        # python_file.write(final_string)
+        pass
 
     #
     # This method generates accessors for collection-like attributes, i.e. ONE_TO_MANY

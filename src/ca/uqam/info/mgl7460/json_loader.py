@@ -173,11 +173,11 @@ class json_loader:
             
             
             else:
-                attr_type = type(value).__name__
+                attr_type = type(value)
                 current_class.add_attribute(key, attr_type)
 
 
-        print ('The current class is: \n'+current_class.__str__())
+        #print ('The current class is: \n'+current_class.__str__())
 
         #insert class in classes dictionary
         self.classes[class_name] = current_class

@@ -28,16 +28,16 @@ class JSONClass:
         self.attributes[attributeName]=valueType
 
 
-    # this method 
-    def set_attribute_value(self, receiver: object, attribute_name: str, attribute_value: object):        
-        if attribute_name in self.attributes:
-            #J'ai utilisé la fonction setattr par défaut de python pour modifier les valeurs des propriétés d'un objet au moment de l'exécution.
-            #Ceci est très utile dans les cas où le nom de la propriété n'est pas connu au moment de l'écriture du code
-            #et doit être spécifié au moment de l'exécution.
-            setattr(receiver, attribute_name, attribute_value)
-        else:
-            # Si on n'a pas trouvé attribute_name dans    attributes , on diffuse un message erreur
-            raise AttributeError(f"{attribute_name} n'a pas trouvé en classe {self.name}")
+    # # this method 
+    # def set_attribute_value(self, receiver: object, attribute_name: str, attribute_value: object):        
+    #     if attribute_name in self.attributes:
+    #         #J'ai utilisé la fonction setattr par défaut de python pour modifier les valeurs des propriétés d'un objet au moment de l'exécution.
+    #         #Ceci est très utile dans les cas où le nom de la propriété n'est pas connu au moment de l'écriture du code
+    #         #et doit être spécifié au moment de l'exécution.
+    #         setattr(receiver, attribute_name, attribute_value)
+    #     else:
+    #         # Si on n'a pas trouvé attribute_name dans    attributes , on diffuse un message erreur
+    #         raise AttributeError(f"{attribute_name} n'a pas trouvé en classe {self.name}")
 
 
 

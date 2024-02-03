@@ -106,8 +106,8 @@ class json_loader:
                 related_class_name = key[6:-1]
                 #print("testttttttttttttttttttttttttttttttttttttttttttttttttttttttt", related_class_name, value[0])
                 current_class.add_relationship(key, related_class_name, Relationship.ONE_TO_MANY,None)
-                #if isinstance(value, list) and len(value) > 0:
-                self.build_class(related_class_name, value[0])
+                if isinstance(value, list) and len(value) > 0:
+                    self.build_class(related_class_name, value[0])
 
 
             #  2. si la clé commence par "table_", on comprend que le champ correspondant correspond à
@@ -132,12 +132,12 @@ class json_loader:
 
             
             
-            # elif key.startswith("table_"):
-            #     related_class_name = key[6:-1]
-            #     index_field = next(iter(value.values())).keys()#[0] if value else None
-            #     current_class.add_relationship(key, related_class_name, Relationship.ONE_TO_MANY, index_field)
-            #     #if isinstance(value, dict):
-            #     self.build_class(related_class_name, next(iter(value.values())))
+            elif key.startswith("table_"):
+                related_class_name = key[6:-1]
+                index_field = next(iter(value.values())).keys()#[0] if value else None
+                current_class.add_relationship(key, related_class_name, Relationship.ONE_TO_MANY, index_field)
+                if isinstance(value, dict):
+                    self.build_class(related_class_name, next(iter(value.values())))
             
 
 
@@ -172,14 +172,14 @@ class json_loader:
             
             
             
-        #     else:
-        #attr_type = type(value).__name__
-        #current_class.add_attribute(key, attr_type)
+            else:
+                attr_type = type(value).__name__
+                current_class.add_attribute(key, attr_type)
 
 
-        # #print ('The current class is: \n'+current_class.__str__())
+        print ('The current class is: \n'+current_class.__str__())
 
-        # #insert class in classes dictionary
+        #insert class in classes dictionary
         self.classes[class_name] = current_class
 
         # # return the constructed class

@@ -117,9 +117,12 @@ class JSONClass:
     # is indexed)
     def generate_constructor(self, python_file: TextIOWrapper):
         # Démarrer la définition du constructeur
-        parameter_list = ", ".join(["self"] + list(self.attributes.keys()))
-        constructor_signature = f"\tdef __init__({parameter_list}):\n"
-        python_file.write(constructor_signature)
+        attribute_names = ", ".join(self.attributes.keys())
+        python_file.write(f"def __init__(self, {attribute_names}):\n")
+
+        #parameter_list = ", ".join(["self"] + list(self.attributes.keys()))
+        #constructor_signature = f"\tdef __init__({parameter_list}):\n"
+        #python_file.write(constructor_signature)
     
         # Initialiser chaque attribut
         for attributename in iter(self.attributes.keys()):

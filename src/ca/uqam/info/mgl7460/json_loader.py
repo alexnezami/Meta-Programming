@@ -87,6 +87,8 @@ class json_loader:
         # la partie 'clé' indique un nom d' "attribut" (donnée simple, e.g. nombre ou chaine
         # de caractères), ou un nom de relation, au cas où la valeur correspondante est elle même 
         # une structure complexe
+        for key, value in json_fragment.items():
+            
             # 1. si la clé commence par "liste_", on comprend tout de suite que le champ correspondant
             #    correspond à une association (Relationship) liant l'objet présent à une entité dont
             #    le nom se trouve après "liste_""
@@ -97,8 +99,18 @@ class json_loader:
             #    DONC, un champ json portant le nom "liste_produits" (ou "liste_clients") veut dire
             #    que nous avons une association de UN À PLUSIEURS entre <la classe qu'on est en train 
             #    de générer> (ici, 'boutique'), et une entité qui s'appelle "produit" ("client")
-            # 
-            # 2. si la clé commence par "table_", on comprend que le champ correspondant correspond à
+            # Extract the class name from the key
+
+
+            if key.startswith("liste_"):
+                related_class_name = key[6:-1]
+                #print("testttttttttttttttttttttttttttttttttttttttttttttttttttttttt", related_class_name, value[0])
+                current_class.add_relationship(key, related_class_name, Relationship.ONE_TO_MANY,None)
+                #if isinstance(value, list) and len(value) > 0:
+                self.build_class(related_class_name, value[0])
+
+
+            #  2. si la clé commence par "table_", on comprend que le champ correspondant correspond à
             #    une association (Relationship) UN À PLUSIEURS, qui est INDEXÉE liant l'objet présent 
             #    à une entité dont le nom se trouve après "table_", mais en enlevant le dernier "s".
             #    Dans le fichier boutique.json, il y a UN cas où un champ à une clé commençant par
@@ -117,7 +129,20 @@ class json_loader:
             #    Quand on insère un objet dans une table (dict()), quel attribut de l'objet doit on utiliser
             #    comme clé? La règle ici est que l'on cherche l'agttribut qui commence par "id_": c'est la
             #    valeur de cet attribut qui va servir comme clé d'insertion.
-            #   
+
+            
+            
+            # elif key.startswith("table_"):
+            #     related_class_name = key[6:-1]
+            #     index_field = next(iter(value.values())).keys()#[0] if value else None
+            #     current_class.add_relationship(key, related_class_name, Relationship.ONE_TO_MANY, index_field)
+            #     #if isinstance(value, dict):
+            #     self.build_class(related_class_name, next(iter(value.values())))
+            
+
+
+
+
             # 3. Si le nom du champ ne commence ni par "liste_" ni par "table_", alors c'est soit: a) un attribut
             #    simple (sa valeur est un type élémentaire de python), b) soit un attribut représentant un objet
             #    complexe, auquel cas on a une association, mais cette fois-ci de UN À UN
@@ -143,13 +168,21 @@ class json_loader:
             #    et 3) c'est l'attribut "id_propduit" de 'ligne_commande' qui est utilisé comme clé d'insertion. 
             #    comment je sais ça? en fait, je prends l'attribut (le champ json) de 'ligne_commande' qui a "id_"
             #    comme préfixe (je suppose qu'il y en a un seul)
-            #    
-        print ('The current class is: \n'+current_class.__str__())
+            
+            
+            
+            
+        #     else:
+        #attr_type = type(value).__name__
+        #current_class.add_attribute(key, attr_type)
 
-        #insert class in classes dictionary
+
+        # #print ('The current class is: \n'+current_class.__str__())
+
+        # #insert class in classes dictionary
         self.classes[class_name] = current_class
 
-        # return the constructed class
+        # # return the constructed class
         return current_class
         
 

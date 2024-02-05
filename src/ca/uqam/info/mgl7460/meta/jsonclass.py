@@ -151,17 +151,30 @@ class JSONClass:
         for key in self.attributes:
             python_file.write("\t\treturn_string = return_string + "+ f'"{key} = "'+   "+ self."+key+".__str__()"  + '+ ", "\n')
 
-        python_file.write("\t\treturn_string = return_string[:-2] + " + '"]"\n')  
-        python_file.write("\t\treturn return_string") 
-        #return_string = return_string[:-2] + "]"
+       
+        
         # 3. third, generate the statements that will print 
 
 
         # the relations.
+        
         for relation in iter(self.relationships.values()):
+            python_file.write("\t\trelation_str_ = "+f'"{relation.name}" + " = ["\n')
+
+            if relation.is_indexed():
+                python_file.write(f"\t\tfor key in iter(self.{relation.name}.keys()):\n")
+                python_file.write("\t\t\t relation_str_ = relation_str_ + key + " + '" -> " + ' + f"self.{relation.name}[key].__str__() + "+ '", "\n')
+
+            python_file.write('\t\trelation_str_ = relation_str_[:-2] + "]"\n')                           
+            python_file.write('\t\treturn_string = return_string + relation_str_ + ", "\n')
+            python_file.write("\t\treturn_string = return_string[:-2] + " + '"]"\n')  
+            python_file.write("\t\treturn return_string")     
+            
+            
+            
             # depending on whether the relation is indexed or not, different code
             # should be generated
-            pass
+        
         
 
         # 4. add __str__ code to the file
@@ -204,6 +217,7 @@ class JSONClass:
         else:
             return f"""    def add_{relation_name}(self, item):
         self.{relation_name}.append(item)\n\n"""
+        
 
     # on crée une chaîne de code pour supprimer des éléments d'une relation
     def get_remover_string(self, relation_name: str, relation: Relationship)-> str:
@@ -213,6 +227,7 @@ class JSONClass:
         else:
             return f"""    def remove_{relation_name}(self, item):
         self.{relation_name}.remove(item)\n\n"""
+        
 
     # on renvoie une chaîne de code pour créer un itérateur pour la relation
     def get_iterator_string(self, relation_name: str, relation: Relationship)-> str:
@@ -222,6 +237,7 @@ class JSONClass:
         else:
             return f"""    def iter_{relation_name}(self):
         return iter(self.{relation_name})\n\n"""
+    
 
     # on crée une chaîne de code pour accéder aux éléments d'une relation indexée
     def get_indexed_accessor_string(self, relation_name: str, relation: Relationship)-> str:
@@ -230,6 +246,7 @@ class JSONClass:
         return self.{relation_name}.get(key)\n\n"""
         else:
             return ""
+        
 
     # on cree objet avec les donnees qu'on a deja trouve
     def create_object(self, json_fragment: dict):

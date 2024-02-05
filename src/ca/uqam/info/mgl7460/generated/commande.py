@@ -19,5 +19,8 @@ class commande:
 	def __str__(self) -> str:
 		return_string = "commande["
 		return_string = return_string + "id = "+ self.id.__str__()+ ", "
+		relation_str_ = "table_ligne_commandes" + " = ["
+		relation_str_ = relation_str_[:-2] + "]"
+		return_string = return_string + relation_str_ + ", "
 		return_string = return_string[:-2] + "]"
 		return return_string
